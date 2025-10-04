@@ -177,12 +177,19 @@ const webSocketServer = new WebSocketServer({
     }
 });
 
-webSocketServer.on("connection", newSocket => {
+webSocketServer.on("connection", (newSocket, req) => {
     console.log("user is authenticated now");
-    newSocket.on("message", message => {
+    newSocket.on("message", mes => {
         webSocketServer.clients.forEach(client => {
-            message = JSON.parse(message);
-            client.send(JSON.stringify(message));
+            const text = JSON.parse(mes).text;
+            console.log("message",text, {
+                username: req.user.username,
+                message: text
+            });
+            client.send(JSON.stringify({
+                username: req.user.username,
+                message: text
+            }));
         })
     })
 })
