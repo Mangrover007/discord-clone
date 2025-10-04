@@ -3,14 +3,16 @@ import cors from "cors";
 import { WebSocketServer } from "ws";
 import url from "url";
 import jwt from "jsonwebtoken";
-import { hash, compare } from "bcryptjs"
+
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { router } from "./routes.mjs";
+export const prisma = new PrismaClient();
+const userToSocket = new Map();
 
 dotenv.config();
-const env = process.env;
+export const env = process.env;
 
 const app = express();
 
@@ -21,112 +23,24 @@ app.use(cors({
     credentials: true
 }))
 
+app.use(router);
+
 app.get("/", (req, res) => {
     console.log(req.headers.cookie);
     console.log(req.cookies);
     res.send("OK");
 })
 
-app.post("/register", async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        const findUser = await prisma.user.findUnique({ where: { email: email } })
-        if (findUser) {
-            return res.status(409).send("user already exists. log in from /login");
-        }
-        const hashPassword = await hash(password, 10)
-        console.log(username, email, password)
-        const createUser = await prisma.user.create({
-            data: {
-                username: username,
-                email: email,
-                password: hashPassword
-            }
-        })
-        return res.status(201).send({
-            message: "user registers",
-            user: createUser
-        })
+app.get("/mapping", async (req, res) => {
+    const keys = [];
+    userToSocket.forEach((val, key) => {
+        keys.push(key);
+    })
+    for (let i = 0; i < keys.length; i++) {
+        const findUser = await prisma.user.findUnique({ where: { id: keys[i] } });
+        console.log(findUser.username + " - " + findUser.id)
     }
-    catch (e) {
-        return res.sendStatus(500);
-    }
-});
-
-app.post("/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const findUser = await prisma.user.findUnique({ where: { username: username } });
-        if (!findUser) {
-            return res.status(404).send("user not found");
-        }
-        const legit = await compare(password, findUser.password);
-        if (!legit) {
-            return res.status(401).send("wrong password try again bud");
-        }
-        const token = jwt.sign(
-            { id: findUser.id, username: findUser.username },
-            env.JWT_SECRET,
-            { expiresIn: "15m" }
-        )
-        const refreshToken = jwt.sign(
-            { id: findUser.id },
-            env.JWT_SECRET,
-            { expiresIn: "7d" }
-        )
-        res.cookie("token", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 15
-        })
-        res.cookie("refresh_token", refreshToken, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7
-        })
-        res.send("user logged in");
-    }
-    catch (e) {
-        return res.sendStatus(500);
-    }
-})
-
-app.get("/refresh-token", async (req, res) => {
-    try {
-        const { refresh_token } = req.cookies;
-        if (!refresh_token) {
-            return res.status(400).send("no refresh token - please log in again")
-        }
-        const userPayload = jwt.verify(refresh_token, env.JWT_SECRET);
-        const user = await prisma.user.findUnique({ where: { id: userPayload.id } })
-        if (!user) {
-            return res.status(404).send("no user found what the fuck?");
-        }
-        const newToken = jwt.sign(
-            { id: user.id, username: user.username },
-            env.JWT_SECRET,
-            { expiresIn: "15m" }
-        )
-        const newRefreshToken = jwt.sign(
-            { id: user.id },
-            env.JWT_SECRET,
-            { expiresIn: "7d" }
-        )
-        res.cookie("token", newToken, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 15
-        })
-        res.cookie("refresh_token", newRefreshToken, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7
-        })
-        res.send("user logged in");
-    }
-    catch (e) {
-        return res.sendStatus(500);
-    }
+    return res.send(userToSocket.size);
 })
 
 const PORT = 3000;
@@ -137,7 +51,7 @@ const server = app.listen(PORT, () => {
 const webSocketServer = new WebSocketServer({
     server: server, path: "/ws",
     verifyClient: async (info, callback) => {
-        console.log("Person is trying to connect lmao");
+        console.log("Person is trying receiver connect lmao");
 
         const cookieHeader = info.req.headers.cookie;
 
@@ -166,7 +80,7 @@ const webSocketServer = new WebSocketServer({
             const decoded = jwt.verify(token, env.JWT_SECRET);
             console.log("JWT verified, user:", decoded);
 
-            // Optional: attach user info to req if you want later access
+            // Optional: attach user info receiver req if you want later access
             info.req.user = decoded;
 
             callback(true); // Accept the connection
@@ -179,18 +93,41 @@ const webSocketServer = new WebSocketServer({
 
 webSocketServer.on("connection", (newSocket, req) => {
     console.log("user is authenticated now");
-    newSocket.on("message", mes => {
-        webSocketServer.clients.forEach(client => {
-            const text = JSON.parse(mes).text;
-            console.log("message",text, {
-                username: req.user.username,
-                message: text
-            });
-            client.send(JSON.stringify({
-                username: req.user.username,
-                message: text
-            }));
-        })
+    // console.log(req.user);
+    userToSocket.set(req.user.id, newSocket);
+    newSocket.on("message", async (mes) => {
+        const payload = JSON.parse(mes);
+        const { type, message, to: receiver } = payload;
+        console.log(payload);
+        try {
+            if (type === "dm") {
+                const findUser = await prisma.user.findUnique({ where: { username: receiver } });
+                if (findUser) {
+                    await prisma.dMMessage.create({
+                        data: {
+                            content: message,
+                            sender: { connect: { username: req.user.username } },
+                            receiver: { connect: { username: receiver } }
+                        }
+                    })
+                    if (userToSocket.has(findUser.id)) {
+                        const findUserSocket = userToSocket.get(findUser.id);
+                        console.log("find user socket", findUserSocket);
+                        findUserSocket.send(JSON.stringify({
+                            username: req.user.username,
+                            message: message
+                        }))
+                    }
+                    newSocket.send(JSON.stringify({
+                        username: req.user.username,
+                        message: message
+                    }))
+                }
+            }
+        }
+        catch (e) {
+            console.log("error happened - ", e);
+        }
     })
 })
 
