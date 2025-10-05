@@ -108,4 +108,22 @@ authRouter.get("/refresh-token", async (req, res) => {
     }
 })
 
+authRouter.get("/me", async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) return res.status(401).send("no token");
+
+  try {
+    const userPayload = jwt.verify(token, env.JWT_SECRET);
+    const user = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { id: true, username: true },
+    });
+    if (!user) return res.status(404).send("user not found");
+    res.json(user);
+  } catch (e) {
+    res.status(401).send("invalid token");
+  }
+});
+
+
 export { authRouter };

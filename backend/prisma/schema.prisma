@@ -8,16 +8,20 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  username     String     @unique
-  email        String     @unique
-  password     String
+  id       String @id @default(uuid())
+  username String @unique
+  email    String @unique
+  password String
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sentDMs      DMMessage[] @relation("SentDMs")
-  receivedDMs  DMMessage[] @relation("ReceivedDMs")
+  sentDMs     DMMessage[] @relation("SentDMs")
+  receivedDMs DMMessage[] @relation("ReceivedDMs")
+
+  servers            Server[]        @relation("ServerMembers")
+  ownedServers       Server[]        @relation("ServerOwner")
+  serverMessagesSent ServerMessage[] @relation("SentServerMessages")
 }
 
 model DMMessage {
@@ -25,9 +29,32 @@ model DMMessage {
   content   String
   createdAt DateTime @default(now())
 
-  sender    User     @relation("SentDMs", fields: [senderId], references: [id])
-  senderId  String
+  sender   User   @relation("SentDMs", fields: [senderId], references: [id])
+  senderId String
 
-  receiver  User     @relation("ReceivedDMs", fields: [receiverId], references: [id])
+  receiver   User   @relation("ReceivedDMs", fields: [receiverId], references: [id])
   receiverId String
+}
+
+model Server {
+  id   String @id @default(uuid())
+  name String @unique
+
+  owner   User   @relation("ServerOwner", fields: [ownerId], references: [id])
+  ownerId String
+
+  members  User[]          @relation("ServerMembers")
+  messages ServerMessage[]
+}
+
+model ServerMessage {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  sender   User   @relation("SentServerMessages", fields: [senderId], references: [id])
+  senderId String
+
+  server   Server @relation(fields: [serverId], references: [id])
+  serverId String
 }
