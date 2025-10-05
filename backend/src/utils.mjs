@@ -110,7 +110,8 @@ async function handleServerMessage(payload, socket, req) {
                 const userSocket = userToSocket.get(member.id);
                 userSocket.send(createMessage("server", {
                     sender: senderUsername,
-                    content: content
+                    content: content,
+                    server: findServer.name
                 }));
             }
         })

@@ -16,13 +16,14 @@ type LayoutProps = {
   userList: User[],
   setUserList: React.Dispatch<React.SetStateAction<User[]>>,
   serverMessages: ServerMessage[],
-  setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>
+  setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>,
+  activeServer: string,
+  setActiveServer: React.Dispatch<React.SetStateAction<string>>
 }
 
-const Layout = ({ socket, DMs, setDMs, serverList, setServerList, setUserList, userList, serverMessages, setServerMessages }: LayoutProps) => {
+const Layout = ({ socket, DMs, setDMs, serverList, setServerList, setUserList, userList, serverMessages, setServerMessages, activeServer, setActiveServer }: LayoutProps) => {
   
   const [activeUser, setActiveUser] = useState<{ id: string; username: string }>({ id: "", username: "" });
-  const [activeServer, setActiveServer] = useState("");
   const [activeReceiver, setActiveReceiver] = useState("");
 
   const [mode, setMode] = useState<"user" | "server" | "create" | "join">("user");
@@ -121,7 +122,7 @@ const Layout = ({ socket, DMs, setDMs, serverList, setServerList, setUserList, u
             onClick={RefreshTokens}
             className="mt-4 p-2 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] transition text-white text-sm"
           >
-            Refresh Tokens
+            Refresh Login
           </button>
         </div>
       </div>
