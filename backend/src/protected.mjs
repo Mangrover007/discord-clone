@@ -69,8 +69,8 @@ protectedRoutes.get("/dms/:user", async (req, res) => {
             id: dm.id,
             content: dm.content,
             createdAt: dm.createdAt,
-            username: dm.sender.username,
-            receiverUsername: dm.receiver.username
+            sender: dm.sender.username,
+            receiver: dm.receiver.username
         }));
 
         res.json(dmsWithUsernames);

@@ -2,11 +2,10 @@ import { prisma, userToSocket } from "./index.mjs";
 import jwt from "jsonwebtoken";
 import { env } from "process";
 
-function createMessage(type, sender, message) {
+function createMessage(type, message) {
     return JSON.stringify({
-        type: type,
-        sender: sender,
-        message: message
+        ...message,
+        type: type
     })
 }
 
@@ -22,19 +21,32 @@ async function handleDm(payload, socket, req) {
     const senderUsername = req.user.username;
     const findRecipient = await prisma.user.findUnique({ where: { username: receiver } });
     if (findRecipient) {
-        await prisma.dMMessage.create({
+        const createDMMessage = await prisma.dMMessage.create({
             data: {
                 content: content,
                 sender: { connect: { username: senderUsername } },
                 receiver: { connect: { username: receiver } }
+            },
+            include: {
+                sender: {
+                    select: {
+                        username: true
+                    }
+                },
+                receiver: {
+                    select: {
+                        username: true
+                    }
+                }
             }
         })
+        console.log(createDMMessage);
         if (userToSocket.has(findRecipient.id)) {
             const receipientSocket = userToSocket.get(findRecipient.id);
             console.log("find user socket", receipientSocket);
-            receipientSocket.send(createMessage("dm", senderUsername, content));
+            receipientSocket.send(createMessage("dm", createDMMessage));
         }
-        socket.send(createMessage("dm", senderUsername, content));
+        socket.send(createMessage("dm", createDMMessage));
     }
 }
 

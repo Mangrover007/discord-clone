@@ -32,6 +32,30 @@ app.get("/", (req, res) => {
     res.send("OK");
 })
 
+// app.get("/serv", async (req, res) => {
+//   try {
+//     const servers = await prisma.server.findMany({
+//       select: { id: true, name: true },
+//     });
+//     res.send(servers);
+//   } catch (e) {
+//     console.error("Error fetching servers:", e);
+//     res.status(500).send("error fetching servers");
+//   }
+// });
+
+// app.get("/use", async (req, res) => {
+//   try {
+//     const users = await prisma.user.findMany({
+//       select: { id: true, username: true },
+//     });
+//     res.send(users);
+//   } catch (e) {
+//     console.error("Error fetching users:", e);
+//     res.status(500).send("error fetching users");
+//   }
+// });
+
 // app.get("/mapping", async (req, res) => {
 //     const keys = [];
 //     userToSocket.forEach((val, key) => {

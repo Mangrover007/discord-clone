@@ -108,7 +108,7 @@ authRouter.get("/refresh-token", async (req, res) => {
     }
 })
 
-authRouter.get("/me", async (req, res) => {
+authRouter.get("/who", async (req, res) => {
   const { token } = req.cookies;
   if (!token) return res.status(401).send("no token");
 
