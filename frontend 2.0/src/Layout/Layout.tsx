@@ -3,23 +3,29 @@ import { Outlet } from "react-router-dom";
 import { DM } from "../components/DM";
 import { Server } from "../components/Server";
 
-import { type User, type Server as ServerType, type DMMessage, type DMMessageFromServer } from "../types";
+import { type User, type Server as ServerType, type DMMessage, type DMMessageFromServer, type ServerMessage } from "../types";
+import { CreateServer } from "../components/CreateServer";
+import { JoinServer } from "../components/JoinServer";
 
 type LayoutProps = {
   socket: WebSocket | null,
   DMs: DMMessage[],
-  setDMs: React.Dispatch<React.SetStateAction<DMMessage[]>>
+  setDMs: React.Dispatch<React.SetStateAction<DMMessage[]>>,
+  serverList: ServerType[],
+  setServerList: React.Dispatch<React.SetStateAction<ServerType[]>>,
+  userList: User[],
+  setUserList: React.Dispatch<React.SetStateAction<User[]>>,
+  serverMessages: ServerMessage[],
+  setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>
 }
 
-const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
+const Layout = ({ socket, DMs, setDMs, serverList, setServerList, setUserList, userList, serverMessages, setServerMessages }: LayoutProps) => {
   
   const [activeUser, setActiveUser] = useState<{ id: string; username: string }>({ id: "", username: "" });
   const [activeServer, setActiveServer] = useState("");
   const [activeReceiver, setActiveReceiver] = useState("");
 
-  const [mode, setMode] = useState("user");
-  const [serverList, setServerList] = useState<ServerType[]>([]);
-  const [userList, setUserList] = useState<User[]>([]);
+  const [mode, setMode] = useState<"user" | "server" | "create" | "join">("user");
 
   async function getUser() {
     const res = await fetch("http://localhost:3000/auth/who", {
@@ -39,8 +45,8 @@ const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
     getUser()
   }, []);
 
-  const handleRedirect = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    setMode(e.currentTarget.name);
+  const handleRedirect = (modeName: "user" | "server" | "create" | "join") => {
+    setMode(modeName);
   };
 
   async function RefreshTokens() {
@@ -88,7 +94,7 @@ const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
           <button
             className={`p-2 rounded-lg hover:bg-[#5865F2] transition ${mode === "user" ? "bg-[#5865F2]" : ""
               }`}
-            onClick={handleRedirect}
+            onClick={() => handleRedirect("user")}
             name="user"
           >
             DMs
@@ -96,10 +102,20 @@ const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
           <button
             className={`p-2 rounded-lg hover:bg-[#5865F2] transition ${mode === "server" ? "bg-[#5865F2]" : ""
               }`}
-            onClick={handleRedirect}
+            onClick={() => handleRedirect("server")}
             name="server"
           >
             Servers
+          </button>
+          <button onClick={() => handleRedirect("create")}
+            className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-md font-medium transition-colors"
+          >
+            New
+          </button>
+          <button onClick={() => handleRedirect("join")}
+            className="px-4 py-2 bg-[#4F545C] hover:bg-[#5865F2] text-white rounded-md font-medium transition-colors"
+          >
+            Join
           </button>
           <button
             onClick={RefreshTokens}
@@ -133,14 +149,6 @@ const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
         ) : (
           <>
             <h2 className="text-gray-400 text-sm font-semibold mb-3">Servers</h2>
-            <div className="flex justify-around mb-3">
-              <button className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-md font-medium transition-colors">
-                New
-              </button>
-              <button className="px-4 py-2 bg-[#4F545C] hover:bg-[#5865F2] text-white rounded-md font-medium transition-colors">
-                Join
-              </button>
-            </div>
             <div className="flex flex-col gap-2">
               {serverList.map((server) => (
                 <div
@@ -158,8 +166,10 @@ const Layout = ({ socket, DMs, setDMs }: LayoutProps) => {
 
       {/* Main Content */}
       <div className="p-4 overflow-y-auto bg-[#36393F]">
-        {mode === "user" && <DM setUserList={setUserList} receiver={activeReceiver} DMs={DMs} setDMs={setDMs} activeUser={activeUser} socket={socket} />}
-        {mode === "server" && <Server setServerList={setServerList} name={activeServer} />}
+        {mode === "user" && <DM setUserList={setUserList} receiver={activeReceiver} DMs={DMs} activeUser={activeUser} socket={socket} />}
+        {mode === "server" && <Server setServerList={setServerList} name={activeServer} activeServer={activeServer} socket={socket} serverMessages={serverMessages} setServerMessages={setServerMessages} activeUser={activeUser.username} />}
+        {mode === "create" && <CreateServer owner={activeUser.username} socket={socket} />}
+        {mode === "join" && <JoinServer serverList={serverList} activeUser={activeUser.username} socket={socket} />}
         <Outlet />
       </div>
     </div>

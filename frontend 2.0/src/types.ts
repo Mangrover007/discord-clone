@@ -21,3 +21,9 @@ export type DMMessageFromServer = {
     receiver: string,
     content: string
 }
+
+export type ServerMessage = {
+    type: "server",
+    content: string,
+    sender: string
+}

@@ -6,14 +6,12 @@ type DMProps = {
     setUserList: React.Dispatch<React.SetStateAction<User[]>>,
     receiver: string,
     DMs: DMMessage[],
-    setDMs: React.Dispatch<React.SetStateAction<DMMessage[]>>,
     activeUser: { id: string; username: string },
     socket: WebSocket | null
 };
 
-const DM = ({ setUserList, receiver, DMs, setDMs, activeUser, socket }: DMProps) => {
+const DM = ({ setUserList, receiver, DMs, activeUser, socket }: DMProps) => {
     const [message, setMessage] = useState<string>("");
-    const [messages, setMessages] = useState<DMMessage[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

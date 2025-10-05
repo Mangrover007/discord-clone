@@ -51,21 +51,22 @@ async function handleDm(payload, socket, req) {
 }
 
 async function handleServerCreate(payload, socket) {
-    const { serverName, ownerName } = payload;
+    const { serverName, owner } = payload;
     console.log(payload);
-    const findUser = await prisma.user.findUnique({ where: { username: ownerName } });
+    const findUser = await prisma.user.findUnique({ where: { username: owner } });
     if (findUser) {
         const findServer = await prisma.server.findUnique({ where: {name: serverName}});
         if (!findServer) {
             const server = await prisma.server.create({
                 data: {
                     name: serverName,
-                    owner: { connect: {username: ownerName} },
+                    owner: { connect: {username: owner} },
                     members: { connect: [{ id: findUser.id }] }
                 }
             })
             console.log(server);
-            socket.send(JSON.stringify(server)); // TODO: non-standard response
+            socket.send(JSON.stringify({...server, type: "server-create"})); // TODO: non-standard response
+            console.log("NEW SERVER CREATED")
         }
         else {
             socket.send(createErrorMessage("409 server already exists"))
@@ -104,9 +105,13 @@ async function handleServerMessage(payload, socket, req) {
         })
         console.log(findServer.members)
         findServer.members.forEach(member => {
+            console.log(member.username);
             if (userToSocket.has(member.id)) {
                 const userSocket = userToSocket.get(member.id);
-                userSocket.send(createMessage("server", senderUsername, content));
+                userSocket.send(createMessage("server", {
+                    sender: senderUsername,
+                    content: content
+                }));
             }
         })
     }

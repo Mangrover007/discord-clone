@@ -88,7 +88,7 @@ webSocketServer.on("connection", (newSocket, req) => {
             if (type === "dm") handleDm(payload, newSocket, req);
             else if (type === "server-create") handleServerCreate(payload, newSocket);
             else if (type === "server") handleServerMessage(payload, newSocket, req);
-            else if (type === "server-join") handleServerJoin(payload, socket);
+            else if (type === "server-join") handleServerJoin(payload, newSocket);
         }
         catch (e) {
             console.log("error happened - ", e);

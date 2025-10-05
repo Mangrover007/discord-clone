@@ -109,7 +109,7 @@ protectedRoutes.get("/server-messages/:server", async (req, res) => {
         id: msg.id,
         content: msg.content,
         createdAt: msg.createdAt,
-        senderUsername: msg.sender.username
+        sender: msg.sender.username
     }));
 
     return res.json(formattedMessages);
@@ -127,7 +127,7 @@ protectedRoutes.get("/users", async (req, res) => {
   }
 });
 
-protectedRoutes.get("/servers", async (req, res) => {
+protectedRoutes.get("/server/all", async (req, res) => {
   try {
     const servers = await prisma.server.findMany({
       select: { id: true, name: true },
@@ -138,6 +138,31 @@ protectedRoutes.get("/servers", async (req, res) => {
     res.status(500).send("error fetching servers");
   }
 });
+
+protectedRoutes.get("/server", async (req,res) => {
+    try {
+        const { user } = req;
+        if (!user) {
+            res.status(400).send("bad request - either log in or fuck off");
+        }
+        const findUser = await prisma.user.findUnique({
+            where: {
+                username: user.username
+            },
+            include: {
+                servers: true
+            }
+        });
+        if (!findUser) {
+            res.status(404).send("user not found");
+        }
+        res.status(200).send(findUser.servers);
+    }
+    catch (e) {
+        console.error("Error with /server", e);
+        res.status(500).send("something went wrong on /server")
+    }
+})
 
 
 export { protectedRoutes };
