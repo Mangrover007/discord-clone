@@ -17,7 +17,6 @@ type Props = {
 const MiddlePanel = ({ mode, userList, activeUser, setActiveReceiver, setActiveServer, serverList }: Props) => {
 
   async function handleReceiverChange(user: User) {
-    console.log("activeReceiver", user);
     if (setActiveReceiver)
     setActiveReceiver(user)
   }

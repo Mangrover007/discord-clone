@@ -15,12 +15,10 @@ export const useDM = (pageNumber: number, user: string | undefined) => {
     async function getDMs() {
         try {
             setLoading(true);
-            console.log("reaching here at least?")
             if (!user) throw new Error("username not defined idk what to send")
             const res = await axios.get(`http://localhost:3000/dms/${user}/${pageNumber}`, {
                 withCredentials: true,
             });
-            // console.log(res.data);
             const { data, metadata } = res.data;
             if (metadata.page.rem <= 0) {
                 setHasMore(false);
@@ -36,13 +34,11 @@ export const useDM = (pageNumber: number, user: string | undefined) => {
             console.log("some error happened", e);
             setLoading(false);
             setHasMore(true);
-            console.log("loading and hasMore - ", loading, hasMore)
             return;
         }
     }
 
     useEffect(() => {
-        console.log(pageNumber, " - page number requested")
         if (pageNumber > 0)
             getDMs();
     }, [pageNumber])

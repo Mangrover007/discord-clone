@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import type { Server, ServerMessage, User } from "../types/client-types";
+import type { Server, User } from "../types/client-types";
 import { useServerMessage } from "../hooks/useServerMessage";
 import { Portal } from "../App";
 
@@ -19,14 +19,10 @@ const ServerMessages = ({ activeUser, activeServer }: Props) => {
 
   const observer = useRef<IntersectionObserver | null>(null);
   const messageStartRef = useCallback((node: HTMLDivElement | null) => {
-    // console.log("reaching here at least?")
-    console.log("three musketmen yet again - ", node, loading, hasMore)
     if (!node || loading || !activeServer?.name) return
     if (observer.current) observer.current.disconnect();
-    // console.log("reaching here part 2??")
     observer.current = new IntersectionObserver((entries) => {
       if (hasMore && entries[0].isIntersecting) {
-        console.log("server div visible");
         setPageNumber(prev => prev + 1);
       }
     })
@@ -34,7 +30,6 @@ const ServerMessages = ({ activeUser, activeServer }: Props) => {
   }, [loading, hasMore]);
 
   useEffect(() => {
-    console.log("changing servers...", activeServer)
     setPageNumber(0);
     if (setMessages)
       setMessages([])
@@ -42,7 +37,6 @@ const ServerMessages = ({ activeUser, activeServer }: Props) => {
   }, [activeServer])
 
   useEffect(() => {
-    console.log("SCROLLING OR NOT")
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [context?.triggerScrollToBottom])
 
@@ -71,7 +65,7 @@ const ServerMessages = ({ activeUser, activeServer }: Props) => {
         </div>
       </div>
     ))}
-    <div ref={messageStartRef} >very very very very very very very very subtle div</div>
+    <div ref={messageStartRef} />
   </>
 }
 

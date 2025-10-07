@@ -1,8 +1,7 @@
 import type React from "react";
 import type { User } from "../types/client-types";
-import { useEffect, useState, useRef, useContext } from "react";
+import { useEffect, useState, useRef } from "react";
 import { DMMessages } from "./DMMessages";
-import { Portal } from "../App";
 
 type DMProps = {
   setUserList: React.Dispatch<React.SetStateAction<User[]>>,
@@ -17,8 +16,6 @@ type DMProps = {
 const DM = ({ setUserList, activeUser, socket, activeReceiver }: DMProps) => {
   const [message, setMessage] = useState<string>("");
   const messageArea = useRef<HTMLDivElement>(null);
-
-  const context = useContext(Portal);
 
   useEffect(() => {
     async function getUserList() {

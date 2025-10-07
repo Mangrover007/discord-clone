@@ -15,7 +15,6 @@ const JoinServer = ({ activeUser, socket }: JoinServerProps) => {
       credentials: "include",
     });
     const data = await res.json();
-    // console.log(data);
     setAllServers(data);
   }
 
@@ -33,7 +32,6 @@ const JoinServer = ({ activeUser, socket }: JoinServerProps) => {
       serverName: button.name,
     };
     socket?.send(JSON.stringify(payload));
-    // console.log("joining server or what now?", button.name);
   };
 
   return (

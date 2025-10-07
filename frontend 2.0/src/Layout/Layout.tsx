@@ -4,7 +4,7 @@ import { DM } from "../components/DM";
 import { LeftSidebar } from "../components/LeftSidebar"
 import { MiddlePanel } from "../components/MiddlePanel"
 
-import type { User, Server as ServerType, ServerMessage } from "../types/client-types";
+import type { User, Server as ServerType } from "../types/client-types";
 import type { } from "../types/server-types";
 
 import { Portal } from "../App";
@@ -22,9 +22,6 @@ type LayoutProps = {
   activeServer: ServerType | null,
   setActiveServer: React.Dispatch<React.SetStateAction<ServerType | null>>,
 
-  serverMessages: ServerMessage[],
-  setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>,
-
   activeReceiver: User,
   setActiveReceiver: React.Dispatch<React.SetStateAction<User>>
 }
@@ -35,9 +32,7 @@ const Layout = ({
   setActiveServer,
   setUserList, 
   setServerList, 
-  activeServer, 
-  serverMessages, 
-  setServerMessages, 
+  activeServer,
   activeReceiver, 
   setActiveReceiver
 }: LayoutProps) => {
@@ -73,7 +68,6 @@ const Layout = ({
     setUserList(userListList)
     setServerList(serverListList)
     setActiveUser(data);
-    console.log("set up is done - try clicking user")
   }
 
   useEffect(() => {
@@ -96,7 +90,7 @@ const Layout = ({
       {/* Main Content */}
       <div className="p-4 overflow-y-auto bg-[#36393F]">
         {mode === "user" && <DM setUserList={setUserList} activeUser={activeUser} socket={socket} activeReceiver={activeReceiver} />}
-        {mode === "server" && <Server activeServer={activeServer} socket={socket} serverMessages={serverMessages} setServerMessages={setServerMessages} activeUser={activeUser} />}
+        {mode === "server" && <Server activeServer={activeServer} socket={socket} activeUser={activeUser} />}
         {mode === "create" && <CreateServer owner={activeUser} socket={socket} />}
         {mode === "join" && <JoinServer serverList={serverList} activeUser={activeUser} socket={socket} />}
         <Outlet />

@@ -20,7 +20,7 @@ const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
   }
 
   const handleLoginTestUser = async () => {
-    const res = await fetch("http://localhost:3000/auth/login", {
+    await fetch("http://localhost:3000/auth/login", {
       body: JSON.stringify({
         username: "test user",
         password: "testpass"
@@ -34,7 +34,7 @@ const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
   }
 
   const handleLoginMango = async () => {
-    const res = await fetch("http://localhost:3000/auth/login", {
+    await fetch("http://localhost:3000/auth/login", {
       body: JSON.stringify({
         username: "mango",
         password: "mango"
@@ -48,7 +48,7 @@ const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
   }
 
   const handleLoginViwi = async () => {
-    const res = await fetch("http://localhost:3000/auth/login", {
+    await fetch("http://localhost:3000/auth/login", {
       body: JSON.stringify({
         username: "viwi",
         password: "gd"

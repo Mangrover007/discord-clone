@@ -104,7 +104,7 @@ const App = () => {
           name: payload.name,
           sender: payload.sender
         }
-        const findServer = serverListRef.current.findIndex((server, index) => {
+        const findServer = serverListRef.current.findIndex((server) => {
           return server.name === ServerMessagePayload.name
         })
         console.log("boutta set server messages", serverListRef.current);
@@ -124,13 +124,14 @@ const App = () => {
     createRoutesFromElements(
       <Route path="/" element={<Layout
         userList={userList}
-        serverList={serverList}
-        setActiveServer={setActiveServer}
         setUserList={setUserList}
-        activeServer={activeServer}
-        serverMessages={serverMessages}
+
+        serverList={serverList}
         setServerList={setServerList}
-        setServerMessages={setServerMessages}
+
+        activeServer={activeServer}
+        setActiveServer={setActiveServer}
+
         activeReceiver={activeReceiver}
         setActiveReceiver={setActiveReceiver}
       />}>

@@ -1,16 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
-import type { Server as ServerType, ServerMessage, User } from "../types/client-types";
+import { useState } from "react";
+import type { Server as ServerType, User } from "../types/client-types";
 import { ServerMessages } from "./ServerMessages";
 
 type ServerProps = {
   activeServer: ServerType | null,
   socket: WebSocket | null | undefined,
-  serverMessages: ServerMessage[],
-  setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>,
   activeUser: User
 };
 
-const Server = ({ activeServer, socket, serverMessages, setServerMessages, activeUser }: ServerProps) => {
+const Server = ({ activeServer, socket, activeUser }: ServerProps) => {
   const [message, setMessage] = useState("");
 
   const handleSendMessage = () => {

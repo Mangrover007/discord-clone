@@ -21,12 +21,10 @@ const DMMessages = ({ activeUser, activeReceiver }: Props) => {
 
   const observer = useRef<IntersectionObserver | null>(null);
   const messageStartRef = useCallback((node: HTMLDivElement | null) => {
-    console.log("three musketmen - ", node, loading, hasMore);
     if (!node || loading || !activeReceiver) return
     observer.current?.disconnect()
     observer.current = new IntersectionObserver((entries) => {
       if (hasMore && entries[0].isIntersecting) {
-        console.log("visible")
         setPageNumber(prev => prev + 1);
       }
     })
@@ -34,23 +32,16 @@ const DMMessages = ({ activeUser, activeReceiver }: Props) => {
   }, [loading, hasMore])
 
   useEffect(() => {
-    console.log("scroll to bottom test");
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     lastDMRef.current?.scrollTo({ behavior: "smooth", top: 0 })
   }, [context?.triggerScrollToBottom])
 
   useEffect(() => {
-    console.log("username is changing - from DMMessage.tsx")
-    console.log("OBSERVER - ", observer.current)
     setPageNumber(0);
     if (setUserDMs)
       setUserDMs([]);
     setHasMore(true);
   }, [activeReceiver])
-
-  useEffect(() => {
-    console.log("PAGE IS UPDATING - ", pageNumber)
-  }, [pageNumber])
 
   return <>
     <div ref={messagesEndRef} />
