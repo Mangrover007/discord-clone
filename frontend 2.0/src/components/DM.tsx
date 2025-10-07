@@ -47,11 +47,6 @@ const DM = ({ setUserList, activeUser, socket, activeReceiver }: DMProps) => {
     setMessage("");
   };
 
-  useEffect(() => {
-    console.log("scroll to bottom nothing");
-    messageArea.current?.scrollTo({ behavior: "smooth", top: 100 })
-  }, [context?.triggerScrollToBottom])
-
   return (
     <div className="flex flex-col h-full bg-[#36393F] rounded-md overflow-y-hidden shadow-lg">
       <h1 className="text-white font-bold p-4 border-b border-[#2F3136]">DM with {activeReceiver.username}</h1>

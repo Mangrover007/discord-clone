@@ -18,5 +18,6 @@ export type Server = {
 export type ServerMessage = {
     sender: string,
     content: string,
-    receiver: string
+    createdAt: string,
+    name: string
 }

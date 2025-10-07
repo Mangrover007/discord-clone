@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import type { Server, User } from "../types/client-types"
 
 type Props = {
@@ -10,7 +9,7 @@ type Props = {
 
   setActiveReceiver: React.Dispatch<React.SetStateAction<User>> | undefined,
 
-  setActiveServer: React.Dispatch<React.SetStateAction<string>> | undefined,
+  setActiveServer: React.Dispatch<React.SetStateAction<Server | null>> | undefined,
 
   serverList: Server[]
 }
@@ -25,7 +24,7 @@ const MiddlePanel = ({ mode, userList, activeUser, setActiveReceiver, setActiveS
 
   async function handleServerChange(server: Server) {
     if (setActiveServer)
-    setActiveServer(server.name)
+    setActiveServer(server)
   }
 
   return <>

@@ -1,94 +1,36 @@
 import React, { useEffect, useState, useRef } from "react";
-import type { Server as ServerType, ServerMessage } from "../types/client-types";
+import type { Server as ServerType, ServerMessage, User } from "../types/client-types";
+import { ServerMessages } from "./ServerMessages";
 
 type ServerProps = {
-  setServerList: React.Dispatch<React.SetStateAction<ServerType[]>>,
-  activeServer: string,
-  socket: WebSocket | null,
+  activeServer: ServerType | null,
+  socket: WebSocket | null | undefined,
   serverMessages: ServerMessage[],
   setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>,
-  activeUser: string
+  activeUser: User
 };
 
-const Server = ({ setServerList, activeServer, socket, serverMessages, setServerMessages, activeUser }: ServerProps) => {
+const Server = ({ activeServer, socket, serverMessages, setServerMessages, activeUser }: ServerProps) => {
   const [message, setMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    async function getServerList() {
-      try {
-        const res = await fetch("http://localhost:3000/server", {
-          credentials: "include"
-        });
-        if (!res.ok) throw new Error("Failed to fetch servers");
-
-        const data: ServerType[] = await res.json();
-        setServerList(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    getServerList();
-  }, [setServerList]);
-
-  useEffect(() => {
-    async function getServerMessages() {
-      try {
-        const res = await fetch(`http://localhost:3000/server-messages/${activeServer}`, {
-          credentials: "include"
-        });
-        const data = await res.json()
-        setServerMessages(data);
-      } catch (e) {
-        console.log("getServerMessages error", e)
-      }
-    }
-    getServerMessages()
-  }, [activeServer])
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
     const payload = {
       type: "server",
       content: message,
-      server: activeServer
+      server: activeServer?.name
     }
     socket?.send(JSON.stringify(payload));
     setMessage("");
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [serverMessages]);
-
   return (
     <div className="flex flex-col h-full bg-[#36393F] rounded-md shadow-lg overflow-hidden">
-      <h1 className="text-white font-bold p-4 border-b border-[#2F3136]">Server: {activeServer}</h1>
+      <h1 className="text-white font-bold p-4 border-b border-[#2F3136]">Server: {activeServer?.name}</h1>
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#202225] scrollbar-track-[#2F3136]">
-        {serverMessages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${msg.sender === "Me" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`p-2 rounded-lg max-w-xs break-words ${
-                msg.sender === activeUser
-                  ? "bg-[#5865F2] text-white rounded-br-none"
-                  : "bg-[#4F545C] text-white rounded-bl-none"
-              }`}
-            >
-              <span className="opacity-50">
-                {msg.sender}:
-              </span>
-              <br />
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
+      <div className="flex-1 flex flex-col-reverse overflow-y-auto p-4 gap-3 scrollbar-thin scrollbar-thumb-[#202225] scrollbar-track-[#2F3136]">
+        {activeServer?.name && <ServerMessages activeServer={activeServer} activeUser={activeUser}  />}
       </div>
 
       {/* Input area */}

@@ -12,3 +12,18 @@ export type DMPayload = {
         },
     }
 }
+
+export type ServerMessagePayload = {
+    type: "server"
+    data: {
+        content: string,
+        createdAt: string,
+        id: string,
+        receiver: {
+            username: string
+        },
+        sender: {
+            username: string
+        },
+    }
+}

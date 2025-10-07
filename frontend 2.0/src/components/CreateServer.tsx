@@ -1,8 +1,9 @@
 import { useState } from "react";
+import type { User } from "../types/client-types";
 
 type CreateServerProps = {
-  owner: string,
-  socket: WebSocket | null
+  owner: User,
+  socket: WebSocket | null | undefined
 };
 
 const CreateServer = ({ owner, socket }: CreateServerProps) => {
@@ -13,7 +14,7 @@ const CreateServer = ({ owner, socket }: CreateServerProps) => {
     const payload = {
       type: "server-create",
       serverName: serverName,
-      owner: owner,
+      owner: owner.username,
     };
     // console.log(payload);
     socket?.send(JSON.stringify(payload));

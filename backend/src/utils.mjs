@@ -89,7 +89,7 @@ async function handleServerMessage(payload, socket, req) {
         }
     });
     if (findServer) {
-        await prisma.serverMessage.create({
+        const message = await prisma.serverMessage.create({
             data: {
                 content: content,
                 server: {connect: { id: findServer.id }},
@@ -109,9 +109,10 @@ async function handleServerMessage(payload, socket, req) {
             if (userToSocket.has(member.id)) {
                 const userSocket = userToSocket.get(member.id);
                 userSocket.send(createMessage("server", {
-                    sender: senderUsername,
-                    content: content,
-                    server: findServer.name
+                    sender: message.sender.username,
+                    content: message.content,
+                    name: findServer.name,
+                    createdAt: message.createdAt
                 }));
             }
         })

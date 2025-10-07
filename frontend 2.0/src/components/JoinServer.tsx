@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import type { Server } from "../types/client-types";
+import type { Server, User } from "../types/client-types";
 
 type JoinServerProps = {
-  serverList: Server[];
-  activeUser: string;
-  socket: WebSocket | null | undefined;
+  serverList: Server[],
+  activeUser: User,
+  socket: WebSocket | null | undefined
 };
 
 const JoinServer = ({ activeUser, socket }: JoinServerProps) => {
@@ -29,7 +29,7 @@ const JoinServer = ({ activeUser, socket }: JoinServerProps) => {
     const button = e.target as HTMLButtonElement;
     const payload = {
       type: "server-join",
-      username: activeUser,
+      username: activeUser.username,
       serverName: button.name,
     };
     socket?.send(JSON.stringify(payload));

@@ -110,8 +110,12 @@ protectedRoutes.get("/dms/:user/:page", async (req, res) => {
     }
 });
 
-protectedRoutes.get("/server-messages/:server", async (req, res) => {
-    const { server } = req.params;
+protectedRoutes.get("/server-messages/:server/:page", async (req, res) => {
+    const { server, page } = req.params;
+
+    console.log("requested data - ", server, page);
+
+    if (!server) return res.status(400).send("no server name provided");
 
     const findServer = await prisma.server.findUnique({
         where: { name: server }
@@ -120,6 +124,10 @@ protectedRoutes.get("/server-messages/:server", async (req, res) => {
     if (!findServer) {
         return res.status(404).send("server not found");
     }
+
+    const count = await prisma.serverMessage.count({
+        where: { serverId: findServer.id }
+    })
 
     const messages = await prisma.serverMessage.findMany({
         where: { serverId: findServer.id },
@@ -131,8 +139,10 @@ protectedRoutes.get("/server-messages/:server", async (req, res) => {
             }
         },
         orderBy: {
-            createdAt: 'asc'
-        }
+            createdAt: 'desc'
+        },
+        take: 30,
+        skip: (page-1)*30
     });
 
     const formattedMessages = messages.map(msg => ({
@@ -142,7 +152,18 @@ protectedRoutes.get("/server-messages/:server", async (req, res) => {
         sender: msg.sender.username
     }));
 
-    return res.json(formattedMessages);
+    return res.json({
+        data: formattedMessages,
+        metadata: {
+            page: {
+                start: (page-1)*30,
+                rem: Math.max(0, count-((page-1)*30)),
+                size: 30,
+                total: count,
+                current: page
+            }
+        }
+    });
 });
 
 protectedRoutes.get("/users", async (req, res) => {

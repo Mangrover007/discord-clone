@@ -8,6 +8,9 @@ import type { User, Server as ServerType, ServerMessage } from "../types/client-
 import type { } from "../types/server-types";
 
 import { Portal } from "../App";
+import { Server } from "../components/Server";
+import { CreateServer } from "../components/CreateServer";
+import { JoinServer } from "../components/JoinServer";
 
 type LayoutProps = {
   userList: User[],
@@ -16,8 +19,8 @@ type LayoutProps = {
   serverList: ServerType[],
   setServerList: React.Dispatch<React.SetStateAction<ServerType[]>>,
 
-  activeServer: string,
-  setActiveServer: React.Dispatch<React.SetStateAction<string>>,
+  activeServer: ServerType | null,
+  setActiveServer: React.Dispatch<React.SetStateAction<ServerType | null>>,
 
   serverMessages: ServerMessage[],
   setServerMessages: React.Dispatch<React.SetStateAction<ServerMessage[]>>,
@@ -46,7 +49,12 @@ const Layout = ({
   const context = useContext(Portal);
   const socket = context?.socket;
 
-  async function getUser() {
+  useEffect(() => {
+    if (context)
+      context.activeUserRef.current = activeUser
+  }, [activeUser]);
+
+  async function getInfo() {
     const res = await fetch("http://localhost:3000/auth/who", {
       credentials: "include",
       method: "GET",
@@ -69,7 +77,7 @@ const Layout = ({
   }
 
   useEffect(() => {
-    getUser()
+    getInfo()
   }, []);
 
   return (
@@ -88,9 +96,9 @@ const Layout = ({
       {/* Main Content */}
       <div className="p-4 overflow-y-auto bg-[#36393F]">
         {mode === "user" && <DM setUserList={setUserList} activeUser={activeUser} socket={socket} activeReceiver={activeReceiver} />}
-        {/* {mode === "server" && <Server setServerList={setServerList} activeServer={activeServer} socket={socket} serverMessages={serverMessages} setServerMessages={setServerMessages} activeUser={activeUser.username} />}
-        {mode === "create" && <CreateServer owner={activeUser.username} socket={socket} />}
-        {mode === "join" && <JoinServer serverList={serverList} activeUser={activeUser.username} socket={socket} />} */}
+        {mode === "server" && <Server activeServer={activeServer} socket={socket} serverMessages={serverMessages} setServerMessages={setServerMessages} activeUser={activeUser} />}
+        {mode === "create" && <CreateServer owner={activeUser} socket={socket} />}
+        {mode === "join" && <JoinServer serverList={serverList} activeUser={activeUser} socket={socket} />}
         <Outlet />
       </div>
     </div>
