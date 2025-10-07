@@ -38,6 +38,7 @@ const App = () => {
   const activeReceiverRef = useRef<User>({ id: "", username: "" });
   const activeUserRef = useRef<User>({ id: "", username: "" });
   const serverListRef = useRef<Server[]>([]);
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
 
   // context values
   const value = {
@@ -118,7 +119,7 @@ const App = () => {
       }
     }
     setSocket(tempSocket);
-  }, [])
+  }, [loggedIn])
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -134,6 +135,9 @@ const App = () => {
 
         activeReceiver={activeReceiver}
         setActiveReceiver={setActiveReceiver}
+
+        loggedIn={loggedIn}
+        setLoggedIn={setLoggedIn}
       />}>
         {/* <Route index /> */}
         {/* <Route path="/dms/:user" element={"dummy"} /> */}

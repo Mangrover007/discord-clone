@@ -62,7 +62,7 @@ const DMMessages = ({ activeUser, activeReceiver }: Props) => {
         </div>
       </>
     })}
-    <div ref={messageStartRef} > very very very very subtle div </div>
+    <div ref={messageStartRef} />
   </>
 
 }

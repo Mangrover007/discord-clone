@@ -1,7 +1,7 @@
 import type { Server, User } from "../types/client-types"
 
 type Props = {
-  mode: "user" | "server" | "create" | "join",
+  mode: "user" | "server" | "create" | "join" | "login" | "register",
 
   userList: User[],
 

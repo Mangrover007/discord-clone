@@ -1,11 +1,9 @@
+import type { User } from "../types/client-types";
 
 type Props = {
-  setMode: React.Dispatch<React.SetStateAction<"user" | "server" | "create" | "join">>,
-  setActiveUser: React.Dispatch<React.SetStateAction<{
-    id: string;
-    username: string;
-  }>>,
-  mode: "user" | "server" | "create" | "join"
+  setMode: React.Dispatch<React.SetStateAction<"user" | "server" | "create" | "join" | "login" | "register">>
+  setActiveUser: React.Dispatch<React.SetStateAction<User>>,
+  mode: "user" | "server" | "create" | "join" | "login" | "register"
 }
 
 const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
@@ -19,64 +17,9 @@ const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
     setActiveUser(data);
   }
 
-  const handleLoginTestUser = async () => {
-    await fetch("http://localhost:3000/auth/login", {
-      body: JSON.stringify({
-        username: "test user",
-        password: "testpass"
-      }),
-      credentials: "include",
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      }
-    })
-  }
-
-  const handleLoginMango = async () => {
-    await fetch("http://localhost:3000/auth/login", {
-      body: JSON.stringify({
-        username: "mango",
-        password: "mango"
-      }),
-      credentials: "include",
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      }
-    })
-  }
-
-  const handleLoginViwi = async () => {
-    await fetch("http://localhost:3000/auth/login", {
-      body: JSON.stringify({
-        username: "viwi",
-        password: "gd"
-      }),
-      credentials: "include",
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      }
-    })
-  }
-
-  const handleRedirect = (modeName: "user" | "server" | "create" | "join") => {
+  const handleRedirect = (modeName: "user" | "server" | "create" | "join" | "login" | "register") => {
     setMode(modeName);
   };
-
-  async function RefreshTokens() {
-    try {
-      await fetch("http://localhost:3000/auth/refresh-token", {
-        credentials: "include",
-        method: "GET",
-      });
-      await getUser();
-    }
-    catch (e) {
-      console.log("error info: ", e)
-    }
-  }
 
   return <>
     <div className="bg-[#202225] flex flex-col items-center py-4 border-r border-[#2f3136]">
@@ -108,20 +51,11 @@ const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
         >
           Join
         </button>
-        <button
-          onClick={RefreshTokens}
-          className="mt-4 p-2 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] transition text-white text-sm"
-        >
-          Refresh Login
+        <button className="cursor-pointer" onClick={() => handleRedirect("login")}>
+          Log in
         </button>
-        <button className="cursor-pointer" onClick={handleLoginTestUser}>
-          Test user
-        </button>
-        <button className="cursor-pointer" onClick={handleLoginMango}>
-          Mango
-        </button>
-        <button className="cursor-pointer" onClick={handleLoginViwi}>
-          Viwi
+        <button className="cursor-pointer" onClick={() => handleRedirect("register")}>
+          Register
         </button>
       </div>
     </div>

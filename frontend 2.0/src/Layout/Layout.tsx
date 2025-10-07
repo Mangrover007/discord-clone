@@ -11,6 +11,8 @@ import { Portal } from "../App";
 import { Server } from "../components/Server";
 import { CreateServer } from "../components/CreateServer";
 import { JoinServer } from "../components/JoinServer";
+import { Login } from "../components/Login";
+import { Register } from "../components/Register";
 
 type LayoutProps = {
   userList: User[],
@@ -23,7 +25,10 @@ type LayoutProps = {
   setActiveServer: React.Dispatch<React.SetStateAction<ServerType | null>>,
 
   activeReceiver: User,
-  setActiveReceiver: React.Dispatch<React.SetStateAction<User>>
+  setActiveReceiver: React.Dispatch<React.SetStateAction<User>>,
+
+  loggedIn: boolean,
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const Layout = ({
@@ -34,58 +39,97 @@ const Layout = ({
   setServerList, 
   activeServer,
   activeReceiver, 
-  setActiveReceiver
+  setActiveReceiver,
+  loggedIn,
+  setLoggedIn
 }: LayoutProps) => {
 
-  const [activeUser, setActiveUser] = useState<{ id: string; username: string }>({ id: "", username: "" });
+  const [activeUser, setActiveUser] = useState<User>({ id: "", username: "" });
 
-  const [mode, setMode] = useState<"user" | "server" | "create" | "join">("user");
+  const [mode, setMode] = useState<"user" | "server" | "create" | "join" | "login" | "register">("user");
 
   const context = useContext(Portal);
   const socket = context?.socket;
+
+
 
   useEffect(() => {
     if (context)
       context.activeUserRef.current = activeUser
   }, [activeUser]);
 
-  async function getInfo() {
+  async function getUser() {
     const res = await fetch("http://localhost:3000/auth/who", {
       credentials: "include",
       method: "GET",
     });
-    const data: { id: string; username: string } = await res.json();
-    const userList = await fetch("http://localhost:3000/users", {
-      credentials: "include",
-      method: "GET"
-    })
-    const userListList = await userList.json()
-    const serverList = await fetch("http://localhost:3000/server", {
-      credentials: "include",
-      method: "GET"
-    })
-    const serverListList = await serverList.json()
-    setUserList(userListList)
-    setServerList(serverListList)
-    setActiveUser(data);
+    if (res.status === 200) {
+      setLoggedIn(true);
+      const data: { id: string; username: string } = await res.json();
+      setActiveUser(data);
+    }
+    else {
+      // if res message says no token, try hitting /refresh-token ->
+      // if /refresh-token successful, hit /who again ->
+      // if /who status == 200, set loggedIn = true
+      // otherwise prompt user to log in again
+    }
   }
 
   useEffect(() => {
+    async function getInfo() {
+      const userList = await fetch("http://localhost:3000/users", {
+        credentials: "include",
+        method: "GET"
+      })
+      const userListList = await userList.json()
+      const serverList = await fetch("http://localhost:3000/server", {
+        credentials: "include",
+        method: "GET"
+      })
+      const serverListList = await serverList.json()
+      setUserList(userListList)
+      setServerList(serverListList)
+    }
     getInfo()
-  }, []);
+  }, [loggedIn])
+
+  useEffect(() => {
+    getUser()
+
+    async function refreshLogin() {
+      try {
+        await fetch("http://localhost:3000/auth/refresh-token", {
+          credentials: "include",
+          method: "GET",
+        });
+        await getUser();
+      }
+      catch (e) {
+        console.log("error info: ", e)
+      }
+    }
+
+    const interval = setInterval(() => {
+      refreshLogin()
+    }, 1000*60*10); // refresh login every 10 minutes
+
+    return () => clearInterval(interval)
+  }, [loggedIn]);
 
   return (
-    <div className="grid grid-cols-[100px_280px_1fr] h-screen bg-[#36393F] text-white">
+    <div className={`grid ${(mode === "login" || mode === "register") ? "grid-cols-[100px_1fr]" : "grid-cols-[100px_280px_1fr]"} h-screen bg-[#36393F] text-white`}>
       <LeftSidebar mode={mode} setActiveUser={setActiveUser} setMode={setMode} />
 
-      <MiddlePanel
+      { (mode === "login" || mode === "register") ? "" :
+        <MiddlePanel
         activeUser={activeUser}
         mode={mode}
         serverList={serverList}
         setActiveReceiver={setActiveReceiver}
         setActiveServer={setActiveServer}
         userList={userList}
-      />
+      />}
 
       {/* Main Content */}
       <div className="p-4 overflow-y-auto bg-[#36393F]">
@@ -93,6 +137,8 @@ const Layout = ({
         {mode === "server" && <Server activeServer={activeServer} socket={socket} activeUser={activeUser} />}
         {mode === "create" && <CreateServer owner={activeUser} socket={socket} />}
         {mode === "join" && <JoinServer serverList={serverList} activeUser={activeUser} socket={socket} />}
+        {mode === "login" && <Login setLoggedIn={setLoggedIn} />}
+        {mode === "register" && <Register />}
         <Outlet />
       </div>
     </div>
