@@ -119,7 +119,7 @@ const Layout = ({
 
   return (
     <div className={`grid ${(mode === "login" || mode === "register") ? "grid-cols-[100px_1fr]" : "grid-cols-[100px_280px_1fr]"} h-screen bg-[#36393F] text-white`}>
-      <LeftSidebar mode={mode} setActiveUser={setActiveUser} setMode={setMode} />
+      <LeftSidebar mode={mode} setMode={setMode} />
 
       { (mode === "login" || mode === "register") ? "" :
         <MiddlePanel

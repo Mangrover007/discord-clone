@@ -1,21 +1,9 @@
-import type { User } from "../types/client-types";
-
 type Props = {
   setMode: React.Dispatch<React.SetStateAction<"user" | "server" | "create" | "join" | "login" | "register">>
-  setActiveUser: React.Dispatch<React.SetStateAction<User>>,
   mode: "user" | "server" | "create" | "join" | "login" | "register"
 }
 
-const LeftSidebar = ({ setMode, setActiveUser, mode }: Props) => {
-
-  async function getUser() {
-    const res = await fetch("http://localhost:3000/auth/who", {
-      credentials: "include",
-      method: "GET",
-    });
-    const data: { id: string; username: string } = await res.json();
-    setActiveUser(data);
-  }
+const LeftSidebar = ({ setMode, mode }: Props) => {
 
   const handleRedirect = (modeName: "user" | "server" | "create" | "join" | "login" | "register") => {
     setMode(modeName);
