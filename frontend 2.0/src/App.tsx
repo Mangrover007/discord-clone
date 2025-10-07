@@ -1,22 +1,50 @@
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from "react-router-dom";
 import Layout from "./Layout/Layout";
-import { useEffect, useRef, useState } from "react";
-import type { DMMessage, DMMessageFromServer, User, Server as ServerType, ServerMessage } from "./types";
+import { createContext, useEffect, useRef, useState } from "react";
+import type { DMPayload } from "./types/server-types";
+import type { DMMessage, User, Server, ServerMessage } from "./types/client-types";
+
+type PortalContextType = {
+  socket: WebSocket | null,
+  userDMs: DMMessage[],
+  setUserDMs: React.Dispatch<React.SetStateAction<DMMessage[]>>,
+  setActiveReceiver: React.Dispatch<React.SetStateAction<User>>,
+  triggerScrollToBottom: boolean
+}
+
+export const Portal = createContext<PortalContextType | null>(null);
 
 const App = () => {
 
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  
+  const [userDMs, setUserDMs] = useState<DMMessage[]>([]);
 
-  const [DMs, setDMs] = useState<DMMessage[]>([]);
-  const [serverList, setServerList] = useState<ServerType[]>([]);
+  const [serverList, setServerList] = useState<Server[]>([]);
   const [userList, setUserList] = useState<User[]>([]);
   const [serverMessages, setServerMessages] = useState<ServerMessage[]>([]);
   const [activeServer, setActiveServer] = useState("");
+  const [activeReceiver, setActiveReceiver] = useState<User>({ id: "", username: "" });
+  const [triggerScrollToBottom, setTriggerScrollToBottom] = useState<boolean>(false);
   const activeServerRef = useRef<string | null>(null);
+  const activeReceiverRef = useRef<User>({ id: "", username: "" });
+
+  // context values
+  const value = {
+    socket: socket,
+    userDMs: userDMs,
+    setUserDMs: setUserDMs,
+    setActiveReceiver: setActiveReceiver,
+    triggerScrollToBottom: triggerScrollToBottom
+  }
 
   useEffect(() => {
     activeServerRef.current = activeServer
   }, [activeServer])
+
+  useEffect(() => {
+    activeReceiverRef.current = activeReceiver
+  }, [activeReceiver])
 
   useEffect(() => {
     const tempSocket = new WebSocket("ws://localhost:3000/ws");
@@ -24,37 +52,30 @@ const App = () => {
     tempSocket.onclose = () => console.log("Socket connection closed");
     tempSocket.onmessage = (message) => {
       const payload = JSON.parse(message.data);
-      console.log("THIS MESSAGE: ", payload);
+      console.log(payload)
       if (payload.type === "dm") {
-        const clientDM: DMMessageFromServer = {
-          content: payload.content,
-          sender: payload.sender.username,
-          receiver: payload.receiver.username,
-          createdAt: payload.createdAt,
-          id: payload.id
+        console.log("active receiver - ", activeReceiverRef.current)
+        const DMPayload: DMPayload = {
+          data: {
+            content: payload.content,
+            createdAt: payload.createdAt,
+            id: payload.id,
+            receiver: payload.receiver,
+            sender: payload.sender
+          },
+          type: "dm"
+        };
+        const clientDM: DMMessage = {
+          content: DMPayload.data.content,
+          receiver: DMPayload.data.receiver.username,
+          sender: DMPayload.data.sender.username
         }
-        setDMs(prev => [...prev, clientDM]);
-      }
-      if (payload.type === "server-create") {
-        const newServer = {
-          id: payload.id,
-          name: payload.name,
-          // ownerId: payload.ownerId
-        }
-        setServerList(prev => [...prev, newServer]);
-      }
-      if (payload.type === "server") {
-        const currentActiveServer = activeServerRef.current
-        console.log(payload.server, " and this is active server - ", currentActiveServer)
-        const newServerMessage: ServerMessage = {
-          type: "server",
-          content: payload.content,
-          sender: payload.sender,
-          server: payload.server
-          // ownerId: payload.ownerId
-        }
-        if (newServerMessage.server === currentActiveServer) {
-          setServerMessages(prev => [...prev, newServerMessage]);
+        console.log("client dm - ", clientDM);
+        if (activeReceiverRef.current.username === clientDM.receiver || activeReceiverRef.current.username === clientDM.sender) {
+          // scroll to bottom
+          console.log("scroll to bottom");
+          setUserDMs(prev => [clientDM, ...prev]);
+          setTriggerScrollToBottom(prev => !prev);
         }
       }
     }
@@ -63,15 +84,28 @@ const App = () => {
 
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<Layout socket={socket} DMs={DMs} setDMs={setDMs} serverList={serverList} setServerList={setServerList} setUserList={setUserList} userList={userList} serverMessages={serverMessages} setServerMessages={setServerMessages} activeServer={activeServer} setActiveServer={setActiveServer} />}>
-        <Route index />
-        <Route path="/dms/:user" element={"dummy"} />
+      <Route path="/" element={<Layout
+        userList={userList}
+        serverList={serverList}
+        setActiveServer={setActiveServer}
+        setUserList={setUserList}
+        activeServer={activeServer}
+        serverMessages={serverMessages}
+        setServerList={setServerList}
+        setServerMessages={setServerMessages}
+        activeReceiver={activeReceiver}
+        setActiveReceiver={setActiveReceiver}
+      />}>
+        {/* <Route index /> */}
+        {/* <Route path="/dms/:user" element={"dummy"} /> */}
       </Route>
     )
   )
 
   return <>
-    <RouterProvider router={router} />
+    <Portal.Provider value={value}>
+      <RouterProvider router={router} />
+    </Portal.Provider>
   </>
 }
 

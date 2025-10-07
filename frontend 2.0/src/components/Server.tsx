@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { type ServerMessage, type Server as ServerType } from "../types";
+import type { Server as ServerType, ServerMessage } from "../types/client-types";
 
 type ServerProps = {
   setServerList: React.Dispatch<React.SetStateAction<ServerType[]>>,
-  name: string,
   activeServer: string,
   socket: WebSocket | null,
   serverMessages: ServerMessage[],
@@ -11,7 +10,7 @@ type ServerProps = {
   activeUser: string
 };
 
-const Server = ({ setServerList, name, activeServer, socket, serverMessages, setServerMessages, activeUser }: ServerProps) => {
+const Server = ({ setServerList, activeServer, socket, serverMessages, setServerMessages, activeUser }: ServerProps) => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +64,7 @@ const Server = ({ setServerList, name, activeServer, socket, serverMessages, set
 
   return (
     <div className="flex flex-col h-full bg-[#36393F] rounded-md shadow-lg overflow-hidden">
-      <h1 className="text-white font-bold p-4 border-b border-[#2F3136]">Server: {name}</h1>
+      <h1 className="text-white font-bold p-4 border-b border-[#2F3136]">Server: {activeServer}</h1>
 
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#202225] scrollbar-track-[#2F3136]">

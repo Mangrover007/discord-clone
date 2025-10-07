@@ -15,7 +15,7 @@ const CreateServer = ({ owner, socket }: CreateServerProps) => {
       serverName: serverName,
       owner: owner,
     };
-    console.log(payload);
+    // console.log(payload);
     socket?.send(JSON.stringify(payload));
   }
 

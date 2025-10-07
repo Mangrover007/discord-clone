@@ -22,9 +22,9 @@ function verifyToken(req, res, next) {
 
 protectedRoutes.use(verifyToken);
 
-protectedRoutes.get("/dms/:user", async (req, res) => {
+protectedRoutes.get("/dms/:user/:page", async (req, res) => {
     try {
-        const { user } = req.params;
+        const { user, page } = req.params;
         const reqUser = req.user;
         if (reqUser.username === user) {
             return res.status(400).send("fuck you");
@@ -53,7 +53,7 @@ protectedRoutes.get("/dms/:user", async (req, res) => {
                 ]
             },
             orderBy: {
-                createdAt: 'asc'
+                createdAt: 'desc'
             },
             include: {
                 sender: {
@@ -62,7 +62,26 @@ protectedRoutes.get("/dms/:user", async (req, res) => {
                 receiver: {
                     select: { username: true }
                 }
-            }
+            },
+            take: 30,
+            skip: (page-1)*30
+        });
+        
+        // dms.reverse();
+
+        const count = await prisma.dMMessage.count({
+            where: {
+                OR: [
+                    {
+                        senderId: reqUser.id,
+                        receiverId: findUser.id
+                    },
+                    {
+                        senderId: findUser.id,
+                        receiverId: reqUser.id
+                    }
+                ]
+            },
         });
 
         const dmsWithUsernames = dms.map(dm => ({
@@ -70,10 +89,21 @@ protectedRoutes.get("/dms/:user", async (req, res) => {
             content: dm.content,
             createdAt: dm.createdAt,
             sender: dm.sender.username,
-            receiver: dm.receiver.username
+            receiver: dm.receiver.username,
         }));
 
-        res.json(dmsWithUsernames);
+        res.json({
+            data: dmsWithUsernames,
+            metadata: {
+                page: {
+                    start: (page-1)*30,
+                    rem: Math.max(0, count-((page-1)*30)),
+                    size: 30,
+                    total: count,
+                    current: page
+                }
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send("Server error");
