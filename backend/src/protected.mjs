@@ -1,0 +1,219 @@
+import { Router } from "express";
+import jwt from "jsonwebtoken";
+import { env, prisma } from "./index.mjs";
+
+const protectedRoutes = Router();
+
+function verifyToken(req, res, next) {
+    const { token } = req.cookies;
+    if (!token) {
+        return res.status(401).send("No token bro");
+    }
+
+    const reqUser = jwt.verify(token, env.JWT_SECRET);
+    if (!reqUser) {
+        return res.status(401).send("Not authorized");
+    }
+
+    req.user = reqUser;
+
+    next();
+}
+
+protectedRoutes.use(verifyToken);
+
+protectedRoutes.get("/dms/:user/:page", async (req, res) => {
+    try {
+        const { user, page } = req.params;
+        const reqUser = req.user;
+        if (reqUser.username === user) {
+            return res.status(400).send("fuck you");
+        }
+
+        const findUser = await prisma.user.findUnique({
+            where: { username: user }
+        });
+
+        if (!findUser) {
+            return res.status(404).send("User not found");
+        }
+
+        // Now fetch DMs *between* the two users only
+        const dms = await prisma.dMMessage.findMany({
+            where: {
+                OR: [
+                    {
+                        senderId: reqUser.id,
+                        receiverId: findUser.id
+                    },
+                    {
+                        senderId: findUser.id,
+                        receiverId: reqUser.id
+                    }
+                ]
+            },
+            orderBy: {
+                createdAt: 'desc'
+            },
+            include: {
+                sender: {
+                    select: { username: true }
+                },
+                receiver: {
+                    select: { username: true }
+                }
+            },
+            take: 30,
+            skip: (page-1)*30
+        });
+        
+        // dms.reverse();
+
+        const count = await prisma.dMMessage.count({
+            where: {
+                OR: [
+                    {
+                        senderId: reqUser.id,
+                        receiverId: findUser.id
+                    },
+                    {
+                        senderId: findUser.id,
+                        receiverId: reqUser.id
+                    }
+                ]
+            },
+        });
+
+        const dmsWithUsernames = dms.map(dm => ({
+            id: dm.id,
+            content: dm.content,
+            createdAt: dm.createdAt,
+            sender: dm.sender.username,
+            receiver: dm.receiver.username,
+        }));
+
+        res.json({
+            data: dmsWithUsernames,
+            metadata: {
+                page: {
+                    start: (page-1)*30,
+                    rem: Math.max(0, count-((page-1)*30)),
+                    size: 30,
+                    total: count,
+                    current: page
+                }
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Server error");
+    }
+});
+
+protectedRoutes.get("/server-messages/:server/:page", async (req, res) => {
+    const { server, page } = req.params;
+
+    console.log("requested data - ", server, page);
+
+    if (!server) return res.status(400).send("no server name provided");
+
+    const findServer = await prisma.server.findUnique({
+        where: { name: server }
+    });
+
+    if (!findServer) {
+        return res.status(404).send("server not found");
+    }
+
+    const count = await prisma.serverMessage.count({
+        where: { serverId: findServer.id }
+    })
+
+    const messages = await prisma.serverMessage.findMany({
+        where: { serverId: findServer.id },
+        include: {
+            sender: {
+                select: {
+                    username: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        take: 30,
+        skip: (page-1)*30
+    });
+
+    const formattedMessages = messages.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        createdAt: msg.createdAt,
+        sender: msg.sender.username
+    }));
+
+    return res.json({
+        data: formattedMessages,
+        metadata: {
+            page: {
+                start: (page-1)*30,
+                rem: Math.max(0, count-((page-1)*30)),
+                size: 30,
+                total: count,
+                current: page
+            }
+        }
+    });
+});
+
+protectedRoutes.get("/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, username: true },
+    });
+    res.send(users);
+  } catch (e) {
+    console.error("Error fetching users:", e);
+    res.status(500).send("error fetching users");
+  }
+});
+
+protectedRoutes.get("/server/all", async (req, res) => {
+  try {
+    const servers = await prisma.server.findMany({
+      select: { id: true, name: true },
+    });
+    res.send(servers);
+  } catch (e) {
+    console.error("Error fetching servers:", e);
+    res.status(500).send("error fetching servers");
+  }
+});
+
+protectedRoutes.get("/server", async (req,res) => {
+    try {
+        const { user } = req;
+        if (!user) {
+            res.status(400).send("bad request - either log in or fuck off");
+        }
+        const findUser = await prisma.user.findUnique({
+            where: {
+                username: user.username
+            },
+            include: {
+                servers: true
+            }
+        });
+        if (!findUser) {
+            res.status(404).send("user not found");
+        }
+        res.status(200).send(findUser.servers);
+    }
+    catch (e) {
+        console.error("Error with /server", e);
+        res.status(500).send("something went wrong on /server")
+    }
+})
+
+
+export { protectedRoutes };
